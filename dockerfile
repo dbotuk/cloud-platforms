@@ -1,8 +1,16 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0
-WORKDIR /app
 COPY . .
-RUN dotnet restore && dotnet publish -c Release -o out
-WORKDIR /app/out
-EXPOSE 5000
-ENTRYPOINT ["dotnet", "ASPNETCore-WebAPI-Sample.dll"]
+RUN dotnet restore ./SampleWebApiAspNetCore/SampleWebApiAspNetCore.csproj
+RUN dotnet publish ./SampleWebApiAspNetCore/SampleWebApiAspNetCore.csproj -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+WORKDIR /app
+
+COPY --from=build /app/publish .
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Development
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "SampleWebApiAspNetCore.dll"]
